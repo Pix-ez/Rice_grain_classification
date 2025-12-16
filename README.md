@@ -3,7 +3,7 @@
 ## Dataset
 For this task, I selected a recommended dataset containing 75,000 images of rice grains. The images feature consistent lighting with a black background, isolating the grain without background noise.
 
-**Source:** [Link here]
+**Source:** LInk[https://www.kaggle.com/datasets/muratkokludataset/rice-image-dataset]
 
 **Classes:**
 The dataset consists of 5 distinct rice grain types:
