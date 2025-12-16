@@ -1,0 +1,8 @@
+##please install correct version of torch based on system and cuda version (here google colab default package are used)
+numpy
+matplotlib
+torch
+torchvision
+tqdm
+torchao
+executorch
