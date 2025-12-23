@@ -79,4 +79,8 @@ Training and evaluation were performed on Google Colab using the free tier.
 ## Integrated these models into simple android app 
 where we can select models from list and image of rice disease and test model running directly on android device 
 andorid device used here= CPU:Mediatek Dimensity 800U , RAM: 8GB, ANDROID: v14
+##DEMO RUNNING ON ANDROID DEVICE
+
+https://github.com/user-attachments/assets/c4cdb963-172a-48f6-aea0-c6a7d3b4e018
+
 
