@@ -37,7 +37,7 @@ val_transforms = transforms.Compose([
 
 
 
-def get_modified_model(num_classes=5):
+def get_modified_model(num_classes):
     # Loading Pre-trained MobileNetV3 Small
     model = models.mobilenet_v3_small(weights=models.MobileNet_V3_Small_Weights.DEFAULT)
 
@@ -50,41 +50,61 @@ def get_modified_model(num_classes=5):
 
 
 
+from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingLR
 
-
-def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=10):
+def train_model(model, train_loader, val_loader, criterion, optimizer,
+                        num_epochs=10, scheduler=None, early_stopping_patience=5):
     since = time.time()
 
-    # Store results to plot later
     history = {
         'train_loss': [],
         'val_loss': [],
         'train_acc': [],
-        'val_acc': []
+        'val_acc': [],
+        'learning_rates': []
     }
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
+    epochs_no_improve = 0
 
     for epoch in range(num_epochs):
-        print(f'Epoch {epoch + 1}/{num_epochs}')
-        print('-' * 10)
+        print(f'\nEpoch {epoch + 1}/{num_epochs}')
+        print('-' * 60)
 
-        model.train()  
+        # Get current learning rate
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f'Learning Rate: {current_lr:.6f}')
+        history['learning_rates'].append(current_lr)
+
+
+        model.train()
         running_loss = 0.0
         running_corrects = 0
 
-        for i ,(inputs, labels ) in enumerate(tqdm(train_loader)):
+        train_pbar = tqdm(train_loader, desc='Training')
+        for inputs, labels in train_pbar:
             inputs = inputs.to(device)
             labels = labels.to(device)
+
             optimizer.zero_grad()
+
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
             loss = criterion(outputs, labels)
+
             loss.backward()
+
+            # Gradient clipping to prevent exploding gradients
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
             optimizer.step()
+
+            #stats
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
+
+            train_pbar.set_postfix({'loss': f'{loss.item():.4f}'})
 
         epoch_loss = running_loss / len(train_loader.dataset)
         epoch_acc = running_corrects.double() / len(train_loader.dataset)
@@ -92,14 +112,16 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, num_epoch
         history['train_loss'].append(epoch_loss)
         history['train_acc'].append(epoch_acc.item())
 
-        print(f'Train Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
+        print(f'Train Loss: {epoch_loss:.4f} | Train Acc: {epoch_acc:.4f}')
 
-        model.eval()   
+        # --- VALIDATION---
+        model.eval()
         val_running_loss = 0.0
         val_running_corrects = 0
 
+        val_pbar = tqdm(val_loader, desc='Validation')
         with torch.no_grad():
-            for i, (inputs, labels) in enumerate(tqdm(val_loader)):
+            for inputs, labels in val_pbar:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -110,28 +132,64 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, num_epoch
                 val_running_loss += loss.item() * inputs.size(0)
                 val_running_corrects += torch.sum(preds == labels.data)
 
+                val_pbar.set_postfix({'loss': f'{loss.item():.4f}'})
+
         val_loss = val_running_loss / len(val_loader.dataset)
         val_acc = val_running_corrects.double() / len(val_loader.dataset)
 
         history['val_loss'].append(val_loss)
         history['val_acc'].append(val_acc.item())
 
-        print(f'Val   Loss: {val_loss:.4f} Acc: {val_acc:.4f}')
+        print(f'Val   Loss: {val_loss:.4f} | Val   Acc: {val_acc:.4f}')
 
+        # Learning rate scheduling
+        if scheduler is not None:
+            if isinstance(scheduler, ReduceLROnPlateau):
+                scheduler.step(val_loss)
+            else:
+                scheduler.step()
+
+        # Save best model
         if val_acc > best_acc:
             best_acc = val_acc
             best_model_wts = copy.deepcopy(model.state_dict())
-            torch.save(model.state_dict(), f"rice_model__epoch:{epoch+1}_loss:{val_loss:.2f}.pth")
-            print("  -> Best model saved!")
+            epochs_no_improve = 0
 
-        print("\n")
+            # Save checkpoint
+            torch.save({
+                'epoch': epoch + 1,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'val_acc': val_acc.item(),
+                'val_loss': val_loss,
+            }, f"best_checkpoint_epoch{epoch+1}_acc{val_acc:.4f}.pth")
+
+            print(f'  ✓ Best model saved! (Acc: {val_acc:.4f})')
+        else:
+            epochs_no_improve += 1
+            print(f'  No improvement for {epochs_no_improve} epoch(s)')
+
+        # Early stopping
+        if epochs_no_improve >= early_stopping_patience:
+            print(f'\nEarly stopping triggered after {epoch + 1} epochs')
+            break
+
+        # Show improvement trend
+        if epoch > 0:
+            acc_improvement = (val_acc.item() - history['val_acc'][-2]) * 100
+            loss_improvement = (history['val_loss'][-2] - val_loss) * 100
+            print(f'  Δ Acc: {acc_improvement:+.2f}% | Δ Loss: {loss_improvement:+.2f}%')
 
     time_elapsed = time.time() - since
+    print(f'\n{"="*60}')
     print(f'Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
-    print(f'Best Val Acc: {best_acc:4f}')
+    print(f'Best Val Acc: {best_acc:.4f}')
+    print(f'{"="*60}')
 
+    # Load best model weights
     model.load_state_dict(best_model_wts)
     return model, history
+
 
 
 def plot_confusion_matrix(y_true, y_pred, classes):

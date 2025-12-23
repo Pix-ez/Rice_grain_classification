@@ -263,6 +263,24 @@
                     android:layout_height="wrap_content"
                     android:nestedScrollingEnabled="false"/>
 
+                <!-- NEW: Performance Stats Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#EEEEEE"
+                    android:layout_marginBottom="12dp"/>
+
+                <!-- NEW: Performance Stats Text -->
+                <TextView
+                    android:id="@+id/performanceStatsText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Calculating stats..."
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:textColor="#757575"
+                    android:gravity="center"/>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

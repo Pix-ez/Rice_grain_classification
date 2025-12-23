@@ -15,8 +15,8 @@ def main():
     parser.add_argument("image_path", type=str, help="Path to the input image file")
     
     # Optional arguments for flexibility
-    parser.add_argument("--model", type=str, default="models/rice_model_ptq_optimized_99.pte", help="Path to .pte model file")
-    parser.add_argument("--dataset_root", type=str, default="./rice-image-dataset/Rice_Image_Dataset", help="Path to dataset root")
+    parser.add_argument("--model", type=str, default="models/mobilenetv3_qat_acu76.pte", help="Path to .pte model file")
+    parser.add_argument("--dataset_root", type=str, default="rice-image-dataset/Rice_Leaf_AUG", help="Path to dataset root")
 
     args = parser.parse_args()
 
@@ -32,7 +32,7 @@ def main():
         idx_to_class = dataset.idx_to_class
     except Exception:
         # Fallback classes based on your README
-        idx_to_class = {0: 'Arborio', 1: 'Basmati', 2: 'Ipsala', 3: 'Jasmine', 4: 'Karacadag'}
+        idx_to_class = {'Bacterial Leaf Blight': 0, 'Brown Spot': 1, 'Healthy Rice Leaf': 2, 'Leaf Blast': 3, 'Leaf scald': 4, 'Sheath Blight': 5}
 
     # 3. Load and Transform Image
     try:

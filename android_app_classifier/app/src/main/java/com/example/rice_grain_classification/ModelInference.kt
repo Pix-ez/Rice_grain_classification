@@ -21,11 +21,12 @@ class ModelInference(private val context: Context) {
 
     // Default ImageNet classes - update with your actual classes
     private val classNames = listOf(
-        "Arborio",
-        "Basmati",
-        "Ipsala",
-        "Jasmine",
-        "Karacadag"
+        "Bacterial Leaf Blight",
+        "Brown Spot",
+        "Healthy Rice Leaf",
+        "Leaf Blast",
+        "Leaf scald",
+        "Sheath Blight"
     )
 
     fun getAvailableModels(): List<String> {

@@ -10,7 +10,7 @@ from torch.utils.data import  DataLoader, random_split
 from executorch.runtime import Runtime, Program, Method
 from helper import plot_confusion_matrix
 
-full_dataset = RiceGrainDataset(root_dir='./rice-image-dataset/Rice_Image_Dataset', transform=train_transforms)
+full_dataset = RiceGrainDataset(root_dir='rice-image-dataset/Rice_Leaf_AUG', transform=train_transforms)
 
 print(f"Total Images Found: {len(full_dataset)}")
 print(f"Class Mapping: {full_dataset.class_to_idx}")

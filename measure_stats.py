@@ -11,7 +11,7 @@ from helper import val_transforms, train_transforms
 from rice_dataset import RiceGrainDataset
 from torch.utils.data import Dataset, DataLoader, random_split
 
-full_dataset = RiceGrainDataset(root_dir='./rice-image-dataset/Rice_Image_Dataset', transform=train_transforms)
+full_dataset = RiceGrainDataset(root_dir='rice-image-dataset/Rice_Leaf_AUG', transform=train_transforms)
 # #using batch_size = 64 we can adjust this on training memory resource
 BATCH_SIZE = 64
 
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     
     # Path to your exported model
     # Use the portable one if you are testing the same one used in Android
-    PTE_MODEL_PATH = "rice_model_quantized_65_.pte" 
+    PTE_MODEL_PATH = "mobilenetv3_qat_acu76.pte" 
     
     if not os.path.exists(PTE_MODEL_PATH):
         print(f"Error: Model file {PTE_MODEL_PATH} not found.")
@@ -233,8 +233,9 @@ if __name__ == "__main__":
     
     # Get class names (assuming you have 'full_dataset' or 'class_names' defined from your previous code)
     # If not defined in this script, define them manually:
-    class_names = ["Arborio", "Basmati", "Ipsala", "Jasmine", "Karacadag"]
-    
+    class_names = ['Bacterial Leaf Blight', 'Brown Spot', 'Healthy Rice Leaf', 'Leaf Blast', 'Leaf scald', 'Sheath Blight']
+
+
     # Run evaluation
     # Note: Ensure val_loader_batch_size_1 is defined (batch size MUST be 1 for most exported models)
     results = evaluate_executorch_model(

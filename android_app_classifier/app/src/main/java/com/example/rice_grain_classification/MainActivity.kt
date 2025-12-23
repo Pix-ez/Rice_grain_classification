@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
     private var selectedImageUri: Uri? = null
     private var currentModel: String? = null
-
+    private lateinit var performanceMonitor: PerformanceMonitor
     companion object {
         init {
             try {
@@ -91,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         modelInference = ModelInference(this)
+        performanceMonitor = PerformanceMonitor(this)
         setupRecyclerView()
         setupModelSpinner()
         setupClickListeners()
@@ -194,10 +195,21 @@ class MainActivity : AppCompatActivity() {
         binding.predictButton.isEnabled = false
         binding.selectImageButton.isEnabled = false
 
+
+        binding.resultsCard.visibility = View.GONE
+
         CoroutineScope(Dispatchers.IO).launch {
+
+
+            // --- START MONITORING ---
+            performanceMonitor.startMonitoring()
+
             val startTime = System.currentTimeMillis()
             val results = modelInference.runInference(imageUri)
             val inferenceTime = System.currentTimeMillis() - startTime
+
+            // --- STOP MONITORING ---
+            val stats = performanceMonitor.stopMonitoring()
 
             withContext(Dispatchers.Main) {
                 binding.progressBar.visibility = View.GONE
@@ -207,6 +219,13 @@ class MainActivity : AppCompatActivity() {
                 if (results != null && results.isNotEmpty()) {
                     binding.statusTextView.text = "Inference completed in ${inferenceTime}ms"
                     resultAdapter.updateResults(results)
+
+                    // Show Prediction Results
+                    resultAdapter.updateResults(results)
+
+                    // Show Performance Stats
+                    binding.performanceStatsText.text = stats.getFormattedStats()
+
                     binding.resultsCard.visibility = View.VISIBLE
                 } else {
                     binding.statusTextView.text = "Inference failed"
